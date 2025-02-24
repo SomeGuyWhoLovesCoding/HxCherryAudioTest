@@ -1,0 +1,19 @@
+-cp src
+-D analyzer-optimize
+
+--library hxcherryaudio
+--library hxal
+
+--define HXCPP_M64
+
+-main Main
+--dce no
+
+--cpp export/cpp
+
+--cmd rm -rf export/cpp/assets
+--cmd cp -r assets export/cpp/assets
+
+--cmd cd export/cpp
+--cmd ./Main
+--cmd cd ../../
