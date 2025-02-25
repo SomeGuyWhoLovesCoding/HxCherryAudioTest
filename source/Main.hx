@@ -1,11 +1,10 @@
 package;
 
 import lime.app.Application;
+import lime.ui.KeyCode;
 
 class Main extends Application {
-	public function new() {
-		super();
-
+	override public function onWindowCreate() {
 		trace('Heyyo');
 
 		var gain:Float = 1.0;
@@ -16,15 +15,29 @@ class Main extends Application {
 
 		if (args.length == 0) {
 			SoundManager.load(filePath, "sneaky");
-			SoundManager.play("sneaky");
+			var snd = SoundManager.get("sneaky");
+			snd.play();
 		} else {
-			for (arg in args) {
-				SoundManager.load(arg, arg);
-			}
+			SoundManager.loadMultiple(args, "sneaky");
+			var snd = SoundManager.get("sneaky");
+			snd.play();
+		}
 
-			for (arg in args) {
-				SoundManager.play(arg);
-			}
+		Application.current.window.onKeyDown.add(keyDownEvt);
+	}
+
+	function keyDownEvt(code:KeyCode, _:Int) {
+		var snd = SoundManager.get("sneaky");
+		switch (code) {
+			case KeyCode.LEFT:
+				trace(snd.time);
+				snd.time -= 1000;
+				trace(snd.time);
+			case KeyCode.RIGHT:
+				trace(snd.time);
+				snd.time += 1000;
+				trace(snd.time);
+			default:
 		}
 	}
 }
