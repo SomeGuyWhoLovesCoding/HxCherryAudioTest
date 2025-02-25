@@ -17,10 +17,12 @@ class Main extends Application {
 			SoundManager.load(filePath, "sneaky");
 			var snd = SoundManager.get("sneaky");
 			snd.play();
+			trace(snd.length);
 		} else {
 			SoundManager.loadMultiple(args, "sneaky");
 			var snd = SoundManager.get("sneaky");
 			snd.play();
+			trace(snd.length);
 		}
 
 		Application.current.window.onKeyDown.add(keyDownEvt);

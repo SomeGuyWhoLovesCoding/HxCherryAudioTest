@@ -124,7 +124,7 @@ private class Source {
 		return (HaxeAL.getSourcef(source, HaxeAL.SEC_OFFSET) * 1000) + (1000 * bufsGoing) + timeAdded;
 	}
 
-	inline function set_time(value:Float) {
+	function set_time(value:Float) {
 		if (value < 0) {
 			value = 0;
 		}
@@ -140,16 +140,17 @@ private class Source {
 		if (!disposed) {
 			var paused = stopped || HaxeAL.getSourcei(source, HaxeAL.SOURCE_STATE) == HaxeAL.PAUSED;
 
-			for (stream in streams) Audio.streamSeekToSample(stream.stream, untyped ((time * 0.001) * stream.stream.meta.sampleRate));
-
 			// Stop the source
 			HaxeAL.sourceStop(source);
 
 			// Unqueue the processed buffer
-			var queuedBuffers:Array<UInt32> = HaxeAL.sourceUnqueueBuffers(source, 3);
+			var queuedBuffers:Array<UInt32> = HaxeAL.sourceUnqueueBuffers(source, 4);
 
 			// Refill each buffer with new audio data
-			for (i in 0...queuedBuffers.length) fillBuffer(queuedBuffers[i]);
+			for (i in 0...queuedBuffers.length) {
+				for (stream in streams) Audio.streamSeekToSample(stream.stream, untyped (((value+i) * 0.001) * stream.stream.meta.sampleRate));
+				fillBuffer(queuedBuffers[(queuedBuffers.length-1)-i]);
+			}
 
 			// Requeue the buffer
 			HaxeAL.sourceQueueBuffers(source, queuedBuffers);
