@@ -144,13 +144,11 @@ private class Source {
 			HaxeAL.sourceStop(source);
 
 			// Unqueue the processed buffer
-			var queuedBuffers:Array<UInt32> = HaxeAL.sourceUnqueueBuffers(source, 4);
+			var queuedBuffers:Array<UInt32> = HaxeAL.sourceUnqueueBuffers(source, 1);
 
 			// Refill each buffer with new audio data
-			for (i in 0...queuedBuffers.length) {
-				for (stream in streams) Audio.streamSeekToSample(stream.stream, untyped (((value+i) * 0.001) * stream.stream.meta.sampleRate));
-				fillBuffer(queuedBuffers[(queuedBuffers.length-1)-i]);
-			}
+			for (stream in streams) Audio.streamSeekToSample(stream.stream, untyped ((value * 0.001) * stream.stream.meta.sampleRate));
+			fillBuffer(queuedBuffers[0]);
 
 			// Requeue the buffer
 			HaxeAL.sourceQueueBuffers(source, queuedBuffers);
@@ -236,6 +234,40 @@ private class Source {
 
 			case INT_16:
 				haxeal.bindings.AL.bufferData(buffer, channels == 2 ? HaxeAL.FORMAT_STEREO16 : HaxeAL.FORMAT_MONO16, pcm.data, pcm.size, sampleRate);
+		}
+
+		Native.free(pcm.data);
+	}
+
+	function fillEveryBuffer() {
+		var streamOne:AudioStreamWrapper = streams[0];
+		final pcm:PCMData = Audio.decodeSamples(streamOne.stream, FLOAT_32, streamOne.stream.meta.sampleRate);
+		var channels = streamOne.stream.meta.channels;
+		var sampleRate = streamOne.stream.meta.sampleRate;
+
+		var i = 1;
+		while (streams[i] != null) {
+			var stream = streams[i];
+			if (stream.stream.meta.channels != channels) throw "Channels are NOT equal!";
+			if (sampleRate < stream.stream.meta.sampleRate) sampleRate = stream.stream.meta.sampleRate;
+			var otherPCM:PCMData = Audio.decodeSamples(stream.stream, FLOAT_32, sampleRate);
+			mixWith(pcm, otherPCM);
+			i++;
+		}
+
+		final zero64:UInt64 = 0;
+
+		if (pcm.size == zero64)
+			return;
+
+		for (buffer in buffers) {
+			switch (pcm.format) {
+				case FLOAT_32:
+					haxeal.bindings.AL.bufferData(buffer, channels == 2 ? 0x10011 : 0x10010, pcm.data, pcm.size, sampleRate);
+	
+				case INT_16:
+					haxeal.bindings.AL.bufferData(buffer, channels == 2 ? HaxeAL.FORMAT_STEREO16 : HaxeAL.FORMAT_MONO16, pcm.data, pcm.size, sampleRate);
+			}
 		}
 
 		Native.free(pcm.data);
